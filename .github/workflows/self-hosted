@@ -1,0 +1,42 @@
+name: Deploy Static Content to Pages
+
+on:
+  push:
+    branches: ["main"] # 在主分支推送时触发
+
+jobs:
+  # 确保这个 job 运行在您的自托管运行器上
+  deploy:
+    runs-on: self-hosted  # 👈 必须使用您的自托管运行器标签
+    
+    # 将 Pages 部署权限授予 GITHUB_TOKEN
+    permissions:
+      pages: write      # 写入 pages artifact
+      id-token: write   # OIDC 认证
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 假设您的静态内容构建命令是 npm run build
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Build static site
+        run: |
+          npm install
+          npm run build # 👈 运行您的构建命令
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5 # 配置 Pages 环境
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './_site' # 👈 替换为您的构建输出目录 (例如 dist, build)
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 # 👈 部署 artifact
